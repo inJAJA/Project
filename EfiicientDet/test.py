@@ -1,67 +1,104 @@
-from efficientdet.dataset import CocoDataset
-from torch.utils.data import DataLoader
-from torchvision import transforms
-from pycocotools.coco import COCO
+# Author: Zylo117
+
+"""
+Simple Inference Script of EfficientDet-Pytorch
+"""
+import time
+import torch
+from torch.backends import cudnn
+from matplotlib import colors
+import argparse
+
+from backbone import EfficientDetBackbone
+import cv2
 import numpy as np
 import os
+import yaml
 
-class mAP_score:
-    def __init__(self, true, preds, param):
-        self.log_path = 'mAP/input'         # txt save path
-        self.true = true                    # ground truth ( CocoDataset )
-        self.preds = preds                  # detection result ( model )
-        self.img_ids = self.true.image_ids  # test dataset data numbers
-        self.labels = self.true.labels      # search object name ( CocoDataset )
-        self.param = param                  # evaluate param
+from torch.utils.data import DataLoader
+from torchvision import transforms
+from efficientdet.utils import BBoxTransform, ClipBoxes
+from utils.utils import preprocess, invert_affine, postprocess, STANDARD_COLORS, standard_to_bgr, get_index_label, plot_one_box
+from efficientdet.dataset import CocoDataset, Resizer, Normalizer, Augmenter, collater
+from mAP_utils import mAP_score
 
-        if self.param['drop_last']:
-            self.using_ids = (len(self.img_ids) // self.param['batch_size']) * self.param['batch_size']    # iter * batch_size
-        else:
-            self.using_ids = len(self.img_ids)
+parser = argparse.ArgumentParser()
+parser.add_argument('-p', '--project', type=str, default='shape', help = 'project name')
+parser.add_argument('-c', '--compound_coef', type=int, default=0, help='coefficients of efficientdet')
+parser.add_argument('-f', '--force_input_size', default=None, help='set None to use default size')
+parser.add_argument('-w', '--weights', type=str, help='number of weights to use' )
+parser.add_argument('--batch_size', type=int, default=16, help='The number of images per batch among all devices')
+parser.add_argument('--data_path', type=str, default='datasets/', help='the root folder of dataset')
+parser.add_argument('-n', '--num_workers', type=int, default=12, help='num_workers of dataloader')
+opt = parser.parse_args()
 
-        self.ground_truth()                 # save ground truth txt
-        self.detection_result()             # save detection result txt
-        self.score()                        # print mAP
+opt.weights = '499_14000'
+
+class Params:
+    def __init__(self, project_file):
+        self.params = yaml.safe_load(open(project_file).read())
+
+    def __getattr__(self, item):
+        return self.params.get(item, None)
+
+# project informations
+params = Params(f'projects/{opt.project}.yml')
+
+# replace this part with your project's anchor config
+anchor_ratios = [(1.0, 1.0), (1.4, 0.7), (0.7, 1.4)]
+anchor_scales = [2 ** 0, 2 ** (1.0 / 3.0), 2 ** (2.0 / 3.0)]
+
+threshold = 0.2
+iou_threshold = 0.2
+
+use_cuda = True
+use_float16 = False
+cudnn.fastest = True
+cudnn.benchmark = True
+
+obj_list = ['rectangle','circle']
+
+val_params = {'batch_size': opt.batch_size,
+                  'shuffle': False,
+                  'drop_last': True,
+                  'collate_fn': collater,
+                  'num_workers': opt.num_workers}
+
+# tf bilinear interpolation is different from any other's, just make do
+input_sizes = [512, 640, 768, 896, 1024, 1280, 1280, 1536, 1536]
+input_size = input_sizes[opt.compound_coef] if opt.force_input_size is None else opt.force_input_size
+
+val_set = CocoDataset(root_dir=os.path.join(opt.data_path, params.project_name), set=params.val_set,
+                          transform=transforms.Compose([Normalizer(mean=params.mean, std=params.std),
+                                                        Resizer(input_sizes[opt.compound_coef])]))
+val_generator = DataLoader(val_set, **val_params)
 
 
-    def ground_truth(self):
-        os.makedirs(f'{self.log_path}/ground-truth', exist_ok=True)             # if don't have 'mAP/input/ground-truth', create folder
+model = EfficientDetBackbone(compound_coef=opt.compound_coef, num_classes=len(obj_list),
+                             ratios=anchor_ratios, scales=anchor_scales)
+model.load_state_dict(torch.load(f'logs/{opt.project}/efficientdet-d{opt.compound_coef}_{opt.weights}.pth', map_location='cpu'))
+model.requires_grad_(False)
+model.eval()
 
-        for i in range(self.using_ids):                                         # each number to evaluate
-            annotations = self.true.load_annotations(i)                         # ground truth : bbox ( CocoDataset )
-            t = open(f'{self.log_path}/ground-truth/{i}.txt', 'w')              # save txt
+if use_cuda:
+    model = model.cuda()
+if use_float16:
+    model = model.half()
 
-            for ann in annotations:
-                t.write(f'{self.labels[ann[-1]]} ')     # categories
-                t.write(f'{ann[0]} ')                   # x1
-                t.write(f'{ann[1]} ')                   # y1
-                t.write(f'{ann[2]} ')                   # x2
-                t.write(f'{ann[3]}\n')                  # y2
-            t.close()
-        print('[ Ground truth ] Save Done')
+result = []
+for iter, data in enumerate(val_generator):
+    with torch.no_grad():
+        features, regression, classification, anchors = model(data['img'].cuda())   # cuda & cup type match
+        regressBoxes = BBoxTransform()
+        clipBoxes = ClipBoxes()
 
+        out = postprocess(data['img'],
+                          anchors, regression, classification,
+                          regressBoxes, clipBoxes,
+                          threshold, iou_threshold)
+        # print(out)
+        result += out
+        # print(result)
+    print(len(result))
 
-    def detection_result(self):
-        os.makedirs(f'{self.log_path}/detection-results', exist_ok=True)    # if don't have 'mAP/input/detection-results', create folder
-
-        for i in range(self.using_ids):
-            pred = self.preds[i]                            # preds = [{'rois': ..., 'class_ids': ..., 'scores': ...}, {...}, {...}, ...] ( model )
-            f = open(f'{self.log_path}/detection-results/{i}.txt', 'w')
-
-            for j in range(len(pred['rois'])):
-                obj = self.labels[pred['class_ids'][j]]     # categories
-                x1, y1, x2, y2 = pred['rois'][j]            # detection result : bbox
-                confidence = pred['scores'][j]              # categories interest / acc
-
-                f.write(f'{obj} ')
-                f.write(f'{confidence} ')
-                f.write(f'{x1} ')
-                f.write(f'{y1} ')
-                f.write(f'{x2} ')
-                f.write(f'{y2}\n')
-            f.close()
-        print('[ Detection Result ] Save Done')
-
-    def score(self):
-        from mAP import main
-
+mAP_score(val_set, result, val_params)
