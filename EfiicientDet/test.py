@@ -3,24 +3,20 @@
 """
 Simple Inference Script of EfficientDet-Pytorch
 """
-import time
 import torch
 from torch.backends import cudnn
-from matplotlib import colors
 import argparse
 
 from backbone import EfficientDetBackbone
-import cv2
-import numpy as np
 import os
 import yaml
 
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from efficientdet.utils import BBoxTransform, ClipBoxes
-from utils.utils import preprocess, invert_affine, postprocess, STANDARD_COLORS, standard_to_bgr, get_index_label, plot_one_box
-from efficientdet.dataset import CocoDataset, Resizer, Normalizer, Augmenter, collater
-from mAP_utils import mAP_score
+from utils.utils import postprocess
+from efficientdet.dataset import CocoDataset, Resizer, Normalizer, collater
+from mAP.utils import mAP_score
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-p', '--project', type=str, default='shape', help = 'project name')
@@ -101,4 +97,5 @@ for iter, data in enumerate(val_generator):
         # print(result)
     print(len(result))
 
-mAP_score(val_set, result, val_params)
+mAP = mAP_score(val_set, result, val_params)
+print(mAP())

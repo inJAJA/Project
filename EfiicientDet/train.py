@@ -17,16 +17,11 @@ from torchvision import transforms
 from tqdm.autonotebook import tqdm
 
 from backbone import EfficientDetBackbone
-from efficientdet.utils import BBoxTransform, ClipBoxes
-from utils.utils import  postprocess
 from efficientdet.dataset import CocoDataset, Resizer, Normalizer, Augmenter, collater
 from efficientdet.loss import FocalLoss
 from utils.sync_batchnorm import patch_replication_callback
 from utils.utils import replace_w_sync_bn, CustomDataParallel, get_last_weights, init_weights, boolean_string
-from mAP import main
 
-# assign CUDA device
-os.environ["CUDA_VISIBLE_DEVICES"] = '2'
 
 class Params:
     def __init__(self, project_file):
@@ -41,7 +36,7 @@ def get_args():
     parser.add_argument('-p', '--project', type=str, default='shape', help='project file that contains parameters')
     parser.add_argument('-c', '--compound_coef', type=int, default=0, help='coefficients of efficientdet')
     parser.add_argument('-n', '--num_workers', type=int, default=12, help='num_workers of dataloader')
-    parser.add_argument('--batch_size', type=int, default=32, help='The number of images per batch among all devices')
+    parser.add_argument('--batch_size', type=int, default=12, help='The number of images per batch among all devices')
     parser.add_argument('--head_only', type=boolean_string, default=False,
                         help='whether finetunes only the regressor and the classifier, '
                              'useful in early stage convergence or small/easy dataset')
@@ -49,7 +44,7 @@ def get_args():
     parser.add_argument('--optim', type=str, default='adamw', help='select optimizer for training, '
                                                                    'suggest using \'admaw\' until the'
                                                                    ' very final stage then switch to \'sgd\'')
-    parser.add_argument('--num_epochs', type=int, default=50)
+    parser.add_argument('--num_epochs', type=int, default=500)
     parser.add_argument('--val_interval', type=int, default=1, help='Number of epoches between valing phases')
     parser.add_argument('--save_interval', type=int, default=500, help='Number of steps between saving')
     parser.add_argument('--es_min_delta', type=float, default=0.0,
@@ -68,50 +63,6 @@ def get_args():
     args = parser.parse_args()
     return args
 
-class mAP_score():
-    def __init__(self, trues, preds, labels):
-        self.log_path_mAP = 'mAP/input'
-        self.trues = trues.detach().cpu().numpy()    # annot = device('cuda')
-        self.preds = preds
-        self.labels = labels
-
-        self.ground_truth()
-        self.detection_result()
-        self.results = main.score()
-
-    def ground_truth(self):
-        os.makedirs(f'{self.log_path_mAP}/ground-truth', exist_ok=True)
-
-        for i, true in enumerate(self.trues):
-            t = open(f'{self.log_path_mAP}/ground-truth/{i}.txt', 'w')
-
-            for ann in true:
-                if ann[-1] in self.labels:
-                    t.write(f'{self.labels[ann[-1]]} ')     # categories
-                    t.write(f'{ann[0]} ')                   # x1
-                    t.write(f'{ann[1]} ')                   # y1
-                    t.write(f'{ann[2]} ')                   # x2
-                    t.write(f'{ann[3]}\n')                  # y2
-            t.close()
-
-    def detection_result(self):
-        os.makedirs(f'{self.log_path_mAP}/detection-results', exist_ok=True)
-
-        for i, pred in enumerate(self.preds):
-            f = open(f'{self.log_path_mAP}/detection-results/{i}.txt', 'w')
-            for j in range(len(pred['rois'])):
-                obj = self.labels[pred['class_ids'][j]]  # categories
-                x1, y1, x2, y2 = pred['rois'][j]  # detection result : bbox
-                confidence = pred['scores'][j]  # categories interest / acc
-
-                f.write(f'{obj} ')
-                f.write(f'{confidence} ')
-                f.write(f'{x1} ')
-                f.write(f'{y1} ')
-                f.write(f'{x2} ')
-                f.write(f'{y2}\n')
-            f.close()
-
 
 class ModelWithLoss(nn.Module):
     def __init__(self, model, debug=False):
@@ -127,7 +78,7 @@ class ModelWithLoss(nn.Module):
                                                 imgs=imgs, obj_list=obj_list)
         else:
             cls_loss, reg_loss = self.criterion(classification, regression, anchors, annotations)
-        return cls_loss, reg_loss, regression, classification, anchors
+        return cls_loss, reg_loss
 
 
 def train(opt):
@@ -169,9 +120,6 @@ def train(opt):
                           transform=transforms.Compose([Normalizer(mean=params.mean, std=params.std),
                                                         Resizer(input_sizes[opt.compound_coef])]))
     val_generator = DataLoader(val_set, **val_params)
-
-    labels = training_set.labels
-    print('label:', labels)
 
     model = EfficientDetBackbone(num_classes=len(params.obj_list), compound_coef=opt.compound_coef,
                                  ratios=eval(params.anchors_ratios), scales=eval(params.anchors_scales))
@@ -275,8 +223,7 @@ def train(opt):
                         annot = annot.cuda()
 
                     optimizer.zero_grad()
-                    cls_loss, reg_loss, regression, classification, anchors= model(imgs, annot, obj_list=params.obj_list)
-
+                    cls_loss, reg_loss = model(imgs, annot, obj_list=params.obj_list)
                     cls_loss = cls_loss.mean()
                     reg_loss = reg_loss.mean()
 
@@ -288,32 +235,15 @@ def train(opt):
                     # torch.nn.utils.clip_grad_norm_(model.parameters(), 0.1)
                     optimizer.step()
 
-                    # loss
                     epoch_loss.append(float(loss))
 
-                    # mAP
-                    threshold = 0.2
-                    iou_threshold = 0.2
-
-                    regressBoxes = BBoxTransform()
-                    clipBoxes = ClipBoxes()
-
-                    out = postprocess(imgs,
-                                      anchors, regression, classification,
-                                      regressBoxes, clipBoxes,
-                                      threshold, iou_threshold)
-
-                    mAP = mAP_score(annot, out, labels)
-                    mAP = mAP.results['mAP']
-
                     progress_bar.set_description(
-                        'Step: {}. Epoch: {}/{}. Iteration: {}/{}. Cls loss: {:.5f}. Reg loss: {:.5f}. Total loss: {:.5f}. mAP: {:.2f}'.format(
-                            step, epoch+1, opt.num_epochs, iter + 1, num_iter_per_epoch, cls_loss.item(),
-                            reg_loss.item(), loss.item(), mAP))
+                        'Step: {}. Epoch: {}/{}. Iteration: {}/{}. Cls loss: {:.5f}. Reg loss: {:.5f}. Total loss: {:.5f}'.format(
+                            step, epoch, opt.num_epochs, iter + 1, num_iter_per_epoch, cls_loss.item(),
+                            reg_loss.item(), loss.item()))
                     writer.add_scalars('Loss', {'train': loss}, step)
                     writer.add_scalars('Regression_loss', {'train': reg_loss}, step)
                     writer.add_scalars('Classfication_loss', {'train': cls_loss}, step)
-                    writer.add_scalars('mAP', {'train': mAP}, step)
 
                     # log learning_rate
                     current_lr = optimizer.param_groups[0]['lr']
@@ -331,13 +261,10 @@ def train(opt):
                     continue
             scheduler.step(np.mean(epoch_loss))
 
-
-
             if epoch % opt.val_interval == 0:
                 model.eval()
                 loss_regression_ls = []
                 loss_classification_ls = []
-
                 for iter, data in enumerate(val_generator):
                     with torch.no_grad():
                         imgs = data['img']
@@ -347,7 +274,7 @@ def train(opt):
                             imgs = imgs.cuda()
                             annot = annot.cuda()
 
-                        cls_loss, reg_loss, regression, classification, anchors = model(imgs, annot, obj_list=params.obj_list)
+                        cls_loss, reg_loss = model(imgs, annot, obj_list=params.obj_list)
                         cls_loss = cls_loss.mean()
                         reg_loss = reg_loss.mean()
 
@@ -362,28 +289,12 @@ def train(opt):
                 reg_loss = np.mean(loss_regression_ls)
                 loss = cls_loss + reg_loss
 
-                # mAP
-                threshold = 0.2
-                iou_threshold = 0.2
-
-                regressBoxes = BBoxTransform()
-                clipBoxes = ClipBoxes()
-
-                out = postprocess(imgs,
-                                  anchors, regression, classification,
-                                  regressBoxes, clipBoxes,
-                                  threshold, iou_threshold)
-
-                mAP = mAP_score(annot, out, labels)
-                mAP = mAP.results['mAP']
-
                 print(
-                    'Val. Epoch: {}/{}. Classification loss: {:1.5f}. Regression loss: {:1.5f}. Total loss: {:1.5f}. mAP: {:.2f}'.format(
-                        epoch+1, opt.num_epochs, cls_loss, reg_loss, loss, mAP))
+                    'Val. Epoch: {}/{}. Classification loss: {:1.5f}. Regression loss: {:1.5f}. Total loss: {:1.5f}'.format(
+                        epoch, opt.num_epochs, cls_loss, reg_loss, loss))
                 writer.add_scalars('Loss', {'val': loss}, step)
                 writer.add_scalars('Regression_loss', {'val': reg_loss}, step)
                 writer.add_scalars('Classfication_loss', {'val': cls_loss}, step)
-                writer.add_scalars('mAP', {'val': mAP}, step)
 
                 if loss + opt.es_min_delta < best_loss:
                     best_loss = loss
