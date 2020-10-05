@@ -12,21 +12,20 @@ import cv2
                                                              Augmenter(),
                                                              Resizer(input_sizes[opt.compound_coef])]))
 project_name 
-    |--> Annotations
+    |--> annotations
     |           |--> 00.xml
     |           |--> ... .xml
-    |--> ImageSets
-    |           |--> Main
-    |                   |--> train.txt
-    |                   |--> trainval.txt
-    |--> JPEGImages
-                |--> 00.png
-                |--> ... .png
+    |--> images
+    |           |--> 00.png
+    |           |--> ... .png
+    |    
+    |--> train.txt
+    |--> test.txt
 
 '''
 
 
-class VocDataset(Dataset):
+class SoccerDataset(Dataset):
     def __init__(self, root_dir, params, set='trainval', transform=None, stuff='.jpg'):
 
         self.root_dir = root_dir  # root_dir = 'datasets/project/
@@ -39,7 +38,7 @@ class VocDataset(Dataset):
         self.load_classes()
 
     def image_info(self):  # filename  # Done
-        f = open(os.path.join(self.root_dir, 'ImageSets/Main/', self.set_name + '.txt'), 'r')
+        f = open(os.path.join(self.root_dir, self.set_name + '.txt'), 'r')
         self.filenames = f.readlines()
 
         self.image_ids = [i for i in range(len(self.filenames))]
@@ -62,9 +61,10 @@ class VocDataset(Dataset):
         for key, value in self.classes.items():
             self.labels[value] = key
 
+    # image dataset number
     def __len__(self):
-        # return len(self.image_ids)
-        return 320  # image dataset number
+        return len(self.image_ids)
+
 
     def __getitem__(self, idx):
         img = self.load_image(idx)  # same index number
@@ -74,8 +74,8 @@ class VocDataset(Dataset):
             sample = self.transform(sample)
         return sample
 
-    def load_image(self, image_index):  # Done
-        filename = self.image_info[image_index].replace('\n', '')  # image_info = {0:'filename', ...}
+    def load_image(self, image_index):  # image file root
+        filename = self.image_info[image_index].replace('\n', '')       # image_info = {0:'filename', ...}
         if os.path.exists(os.path.join(self.root_dir, 'JPEGImages')):
             path = os.path.join(self.root_dir, 'JPEGImages', filename + self.stuff)
         else:
