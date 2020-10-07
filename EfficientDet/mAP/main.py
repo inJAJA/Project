@@ -44,12 +44,19 @@ def score(args = args):
         specific_iou_flagged = True
 
     # make sure that the cwd() is the location of the python script (so that every path makes sense)
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
-
+    '''
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))            # change directory
     GT_PATH = os.path.join(os.getcwd(), 'input', 'ground-truth')
     DR_PATH = os.path.join(os.getcwd(), 'input', 'detection-results')
     # if there are no images then no animation can be shown
     IMG_PATH = os.path.join(os.getcwd(), 'input', 'images-optional')
+    '''
+    file_path = 'mAP'
+    GT_PATH = os.path.join(file_path, 'input', 'ground-truth')
+    DR_PATH = os.path.join(file_path, 'input', 'detection-results')
+    # if there are no images then no animation can be shown
+    IMG_PATH = os.path.join(file_path, 'input', 'images-optional')
+
     if os.path.exists(IMG_PATH):
         for dirpath, dirnames, files in os.walk(IMG_PATH):
             if not files:
@@ -915,6 +922,6 @@ def score(args = args):
             plot_color,
             ""
             )
-    os.chdir("/home/zaiin4050/project/Yet-Another-EfficientDet-Pytorch/")
+    # os.chdir("/home/zaiin4050/project/Yet-Another-EfficientDet-Pytorch/")
 
     return results

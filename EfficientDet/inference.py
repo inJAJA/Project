@@ -17,12 +17,12 @@ import yaml
 from efficientdet.utils import BBoxTransform, ClipBoxes
 from utils.utils import preprocess, invert_affine, postprocess, STANDARD_COLORS, standard_to_bgr, get_index_label, plot_one_box
 
-project = 'VOC2012'
-number = '16_170'
-compound_coef = 0
+project = 'soccer_ball_data'
+number = '199_15600'
+compound_coef = 4
 force_input_size = None  # set None to use default size
 # img_path = 'datasets/shape/val/900.jpg''
-img_path = os.path.join('datasets', project,'JPEGImages', '2007_000027.jpg')
+img_path = os.path.join('datasets', project, 'test03.jpg')      # image load
 
 # img_name
 if type(img_path) == list:
@@ -89,8 +89,8 @@ with torch.no_grad():
 
 def display(preds, imgs, imshow=True, imwrite=False):
     for i, img_name in zip(range(len(imgs)), img_names):
-        if len(preds[i]['rois']) == 0:
-            continue
+        # if len(preds[i]['rois']) == 0:                    # if model dosen't detect object, not show image
+        #     continue
 
         imgs[i] = imgs[i].copy()
 
@@ -102,8 +102,10 @@ def display(preds, imgs, imshow=True, imwrite=False):
 
 
         if imshow:
-            cv2.imshow(f'{img_names}', imgs[i])
+            img = cv2.cvtColor(imgs[i], cv2.COLOR_BGR2RGB)
+            cv2.imshow(f'{img_names}', img)
             cv2.waitKey(0)
+            cv2.destroyAllWindows()
 
         if imwrite:
             cv2.imwrite(f'test/img_inferred_d{compound_coef}_{img_name}', imgs[i])

@@ -26,11 +26,10 @@ project_name
 
 
 class SoccerDataset(Dataset):
-    def __init__(self, root_dir, params, set='trainval', transform=None, stuff='.jpg'):
+    def __init__(self, root_dir, params, set='trainval', transform=None):
 
         self.root_dir = root_dir  # root_dir = 'datasets/project/
         self.set_name = set
-        self.stuff = stuff
         self.params = params
         self.transform = transform
 
@@ -64,7 +63,7 @@ class SoccerDataset(Dataset):
     # image dataset number
     def __len__(self):
         return len(self.image_ids)
-
+        # return 2
 
     def __getitem__(self, idx):
         img = self.load_image(idx)  # same index number
@@ -77,9 +76,10 @@ class SoccerDataset(Dataset):
     def load_image(self, image_index):  # image file root
         filename = self.image_info[image_index].replace('\n', '')       # image_info = {0:'filename', ...}
         if os.path.exists(os.path.join(self.root_dir, 'JPEGImages')):
-            path = os.path.join(self.root_dir, 'JPEGImages', filename + self.stuff)
+            path = os.path.join(self.root_dir, 'JPEGImages', filename)
         else:
-            path = os.path.join(self.root_dir, 'images', filename + self.stuff)
+            path = os.path.join(self.root_dir, 'images', filename)
+
         img = cv2.imread(path, cv2.IMREAD_COLOR)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
@@ -88,6 +88,14 @@ class SoccerDataset(Dataset):
     def load_annotations(self, image_index):
         # get ground truth annotations
         filename = self.image_info[image_index].replace('\n', '')
+        # only use filename, not stuff
+        if filename.endswith('.jpg'):
+            filename = filename.replace('.jpg', '')
+        elif filename.endswith('.png'):
+            filename = filename.replace('.png', '')
+        else:
+            print('ERROR : Images not load ( we only load jpg, png) ')
+
         if os.path.exists(os.path.join(self.root_dir, 'Annotations')):
             path = os.path.join(self.root_dir, 'Annotations', filename + '.xml')
         else:

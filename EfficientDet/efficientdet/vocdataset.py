@@ -61,8 +61,8 @@ class VocDataset(Dataset):
             self.labels[value] = key
 
     def __len__(self):
-        return len(self.image_ids)
-        # return 320                      # image dataset number
+        # return len(self.image_ids)
+        return 1600                      # image dataset number
 
     def __getitem__(self, idx):
         img = self.load_image(idx)              # same index number
