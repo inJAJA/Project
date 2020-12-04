@@ -61,10 +61,10 @@ labels = []
 with open(opt.test_list, 'r') as fd:
     pairs = fd.readlines()
 
-# ths = np.arange(0.2, 1.02, 0.02)
-ths = [0.28]
+ths = np.arange(0.2, 1.02, 0.02)
 Acc = []
 pbar = tqdm(pairs)
+
 with open('arcface_acc5.txt', 'w') as f:
     for th in ths:
         score = []
