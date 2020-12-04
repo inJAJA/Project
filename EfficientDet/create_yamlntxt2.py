@@ -4,24 +4,26 @@ import yaml
 import json
 
 top = 'ex_task42'
-project = 'task42_1130'
+project = 'task42_1204'
 train_size = 0.8
 random_seed = 13
 
 # you need to Unnormal file ( Repair + Disposal )
 
-obj_list = ['BasketballStand_surfacePeeling', 'SignalController_discoloration', 'SignalController_surfacePeeling', 'PavementBlock_damage',
-            'TelephoneBooth_discoloration', 'HandicapZone_surfacePeeling', 'BoundaryStone_damage', 'StreetTreeCover_discoloration',
-            'StationSign_surfacePeeling', 'PavementBlock_surfacePeeling', 'Bench_surfacePeeling', 'StreetlampPole_distortion', 'ProtectionFence_distortion',
-            'GoalPost_surfacePeeling', 'StationSign_damage', 'SignalController_damage', 'TreeSupport_damage', 'ConstructionCover_damage',
-            'StreetTreeCover_distortion', 'Bollard_damage', 'AirwalkMachine_surfacePeeling', 'AirwalkMachine_discoloration', 'PavementBlock_distortion',
-            'DringkingFountain_discoloration', 'BrailleBlock_damage', 'DringkingFountain_surfacePeeling', 'Bench_damage', 'WalkAcrossPreventionFacility_damage',
-            'BenchBack_surfacePeeling', 'TurnMachine_surfacePeeling', 'MovableToilet_damage', 'Pagora_discoloration', 'StreetlampPole_damage',
-            'StreetTreeCover_damage', 'Manhole_surfacePeeling', 'StreetlampPole_discoloration', 'MovableToilet_surfacePeeling', 'Manhole_damage',
-            'TrashCan_damage', 'TelephoneBooth_surfacePeeling', 'MovableToilet_discoloration', 'Bench_discoloration', 'RoadSafetySign_damage',
-            'BenchBack_discoloration', 'DringkingFountain_distortion', 'DringkingFountain_damage', 'StationSign_discoloration', 'Bollard_surfacePeeling',
-            'BoundaryStone_distortion', 'ConstructionCover_distortion', 'RoadSafetySign_surfacePeeling', 'PostBox_damage', 'TrashCan_discoloration',
-            'PublicToilet_damage', 'StationShelter_surfacePeeling', 'TurnMachine_distortion', 'SitupNachine_surfacePeeling', 'Pagora_damage']
+obj_list = ['AirwalkMachine_discoloration', 'AirwalkMachine_surfacePeeling', 'BasketballStand_damage', 'BasketballStand_surfacePeeling',
+            'BenchBack_damage', 'BenchBack_discoloration', 'BenchBack_surfacePeeling', 'Bench_damage', 'Bench_discoloration',
+            'Bench_surfacePeeling', 'Bollard_damage', 'Bollard_surfacePeeling', 'BoundaryStone_damage', 'BoundaryStone_distortion',
+            'BrailleBlock_damage', 'ConstructionCover_damage', 'ConstructionCover_distortion', 'DringkingFountain_damage',
+            'DringkingFountain_discoloration', 'DringkingFountain_distortion', 'DringkingFountain_surfacePeeling', 'GoalPost_surfacePeeling',
+            'HandicapZone_surfacePeeling', 'Manhole_damage', 'Manhole_surfacePeeling', 'MovableToilet_damage', 'MovableToilet_discoloration',
+            'MovableToilet_surfacePeeling', 'Pagora_damage', 'Pagora_discoloration', 'Pagora_surfacePeeling', 'PavementBlock_damage',
+            'PavementBlock_distortion', 'PavementBlock_surfacePeeling', 'PostBox_damage', 'ProtectionFence_distortion', 'PublicToilet_damage',
+            'RoadSafetySign_damage', 'RoadSafetySign_surfacePeeling', 'RunningMachine_surfacePeeling', 'Seesaw_surfacePeeling', 'SignalController_damage',
+            'SignalController_discoloration', 'SignalController_surfacePeeling', 'SitupNachine_surfacePeeling', 'StationShelter_surfacePeeling',
+            'StationSign_damage', 'StationSign_discoloration', 'StationSign_surfacePeeling', 'StreetTreeCover_damage', 'StreetTreeCover_discoloration',
+            'StreetTreeCover_distortion', 'StreetlampPole_damage', 'StreetlampPole_discoloration', 'StreetlampPole_distortion', 'TelephoneBooth_discoloration',
+            'TelephoneBooth_surfacePeeling', 'TrashCan_damage', 'TrashCan_discoloration', 'TreeSupport_damage', 'Trench_damage',
+            'Trench_surfacePeeling', 'TurnMachine_distortion', 'TurnMachine_surfacePeeling', 'WalkAcrossPreventionFacility_damage']
 
 class create_datatxt:
     def __init__(self, project, train_size, random_seed):
@@ -106,7 +108,7 @@ def create_yaml(project, obj_list):
     # this is coco anchors, change it if necessary
 
 
-    with open(f'projects/{project}.yml', 'w') as f:
+    with open(f'projects/{project}_crop.yml', 'w') as f:
         yaml.dump(data00, f)
         yaml.dump(data01, f, default_flow_style=None)
         yaml.dump(data02, f)
