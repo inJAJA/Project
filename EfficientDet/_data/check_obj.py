@@ -8,7 +8,7 @@ import cv2
 '''
 
 
-files = glob(r'/data/data/ex_task42/task42_1130/annotations'+'/*.json')
+files = glob(r'/data/data/ex_task42/task42_1204/annotations'+'/*.json')
 
 print('list :', files)
 print('list length :', len(files))  # 380
@@ -35,7 +35,7 @@ print('obj_list :', sorted(obj_list))
 '''
 # 파손 부위 data class check
 '''
-files = glob(r'/data/data/ex_task42/task42_1130/crop/annotations'+'/*.json')
+files = glob(r'/data/data/ex_task42/task42_1204/annotations'+'/*.json')
 
 label_list =[]
 for file in files:
@@ -48,26 +48,31 @@ for file in files:
             i += 1
             class_name = obj['bbox1']['class']
             damagetypes = obj['bbox1']['bbox2']
+            status = obj['bbox1']['status']
 
             # image
-            ture = 0
+            true = 0
             image_name = file.split('/')[-1].replace('json', 'jpg')
             image = cv2.imread(os.path.join('/data/data/ex_task42/task42_1130/images', image_name))
 
-            for damagetype in damagetypes:
+            for d, damagetype in enumerate(damagetypes):
                 i += 1
                 damage= damagetype['damagetype']
                 bbox = bboxs[i-1]['points']
                 label = f'{class_name}_{damage}'
+
+                if d == 0 and status == 'Normal':
+                    print('Normal :', file)             # damagetype이 있지만 status가 'Noraml'인 file 검색
+
                 if label not in label_list:
                     label_list += [label]
 
                 # 파손 라벨링 보기
+            true = 1
+            # true = 0   
+            if true:
                 # print(image_name)
                 image = cv2.rectangle(image, (int (bbox[0]), int(bbox[1])), (int(bbox[0]+bbox[2]), int(bbox[1]+bbox[3])), (255, 0, 0), 3)
-                # ture = 1
-                true = 0
-            if ture:
                 cv2.namedWindow(f'{image_name}', cv2.WINDOW_NORMAL)
                 cv2.imshow(f'{image_name}', image)
                 cv2.waitKey(2000)
