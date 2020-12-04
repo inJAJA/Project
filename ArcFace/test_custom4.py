@@ -5,6 +5,10 @@ import pickle
 from config.config_test import Config
 from tqdm import tqdm
 
+'''
+compare All Image to All Id
+'''
+
 opt = Config()
 os.environ["CUDA_VISIBLE_DEVICES"] = opt.gpu_id
 
