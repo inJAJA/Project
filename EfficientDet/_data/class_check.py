@@ -131,7 +131,6 @@ print('Exception :', sorted(exception))
 Train or Test
 data damge class check
 """
-
 project = 'task42_1130'
 root = '/data/data/ex_task42/'
 
@@ -158,6 +157,7 @@ obj_list = ['BasketballStand_surfacePeeling', 'SignalController_discoloration', 
 
 classes = []
 count = {}
+damage_num = 0
 for obj in obj_list:    # create FORM
     count[obj] = 0
 
@@ -177,7 +177,7 @@ for data in data_list:
                 classes.append(label)
 
             count[label] += 1
-
+            damage_num += 1
 for num in sorted(count.items()):
     print(num)
 print('-----------------------')
@@ -188,8 +188,10 @@ exception= Set_train.difference(Set_test)        # difference between 'num' and 
 
 ## Information
 print(f'Information : {project}')
-print(f'Data : {check}')
+print(f'Data        : {check}')
 # print('Class :', sorted(classes))
-print('Total :', len(data_list))
-print('Class :', len(classes))
-print('Exception :', sorted(exception))
+print('Total data  :', len(data_list))
+print('Damage data :', damage_num)
+print('Obj list    :', len(obj_list))
+print('Class       :', len(classes))
+print('Exception   :', sorted(exception))
