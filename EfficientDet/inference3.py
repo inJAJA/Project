@@ -19,20 +19,14 @@ from utils.utils import preprocess, invert_affine, postprocess, STANDARD_COLORS,
 
 project = 'task42_1130'
 number = '199'
+save_time = '20201203-174940'
+
 compound_coef = 4
 force_input_size = None  # set None to use default size
 # img_path = 'datasets/shape/val/900.jpg''
 # img_path = os.path.join('datasets', project, 'test03.jpg')      # image load
-img_path = os.path.join('/home/jain/Downloads','test', 'pavement1.jpg')      # image load
-# img_path = os.path.join('/data/data',f'{project}','images', '201029100414AO_00002871.jpg')      # image load
-# img_path = os.path.join('/data/data','ex_task42',f'{project}','images','55db7caa-8037-4d80-98a9-33d77346aee4.jpg')
-print(img_path)
+# img_path = os.path.join('/home/jain/Downloads','test', '19-1.png')      # image load
 
-# img_name
-if type(img_path) == list:
-    img_names = [i.split('/')[-1] for i in img_path]
-else:
-    img_names = [img_path.split('/')[-1]]
 
 # replace this part with your project's anchor config
 anchor_ratios = [(1.0, 1.0), (1.4, 0.7), (0.7, 1.4)]
@@ -53,30 +47,23 @@ class Params:
     def __getattr__(self, item):
         return self.params.get(item, None)
 
-params = Params(f'projects/{project}.yml')
+params = Params(f'projects/{project}_crop.yml')
 obj_list = params.obj_list
 obj_list.sort()
 print(obj_list)
-
 
 color_list = standard_to_bgr(STANDARD_COLORS)
 # tf bilinear interpolation is different from any other's, just make do
 input_sizes = [512, 640, 768, 896, 1024, 1280, 1280, 1536, 1536]
 input_size = input_sizes[compound_coef] if force_input_size is None else force_input_size
-ori_imgs, framed_imgs, framed_metas = preprocess(img_path, max_size=input_size)
 
-if use_cuda:
-    x = torch.stack([torch.from_numpy(fi).cuda() for fi in framed_imgs], 0)
-else:
-    x = torch.stack([torch.from_numpy(fi) for fi in framed_imgs], 0)
 
-x = x.to(torch.float32 if not use_float16 else torch.float16).permute(0, 3, 1, 2)
 
 model = EfficientDetBackbone(compound_coef=compound_coef, num_classes=len(obj_list),
                              ratios=anchor_ratios, scales=anchor_scales)
 # model.load_state_dict(torch.load(f'logs/{project}/efficientdet-d{compound_coef}_{number}.pth', map_location='cpu'))
 # model.load_state_dict(torch.load(f'/data/efdet/logs/{project}/efficientdet-d{compound_coef}_{number}.pth', map_location='cpu'))
-model.load_state_dict(torch.load(f'/data/efdet/logs/{project}/efficientdet-d{compound_coef}_{number}.pth', map_location='cpu'))
+model.load_state_dict(torch.load(f'/data/efdet/logs/{project}/crop/weights/{save_time}/efficientdet-d{compound_coef}_{number}.pth', map_location='cpu'))
 
 model.requires_grad_(False)
 model.eval()
@@ -86,18 +73,7 @@ if use_cuda:
 if use_float16:
     model = model.half()
 
-with torch.no_grad():
-    features, regression, classification, anchors = model(x)
-    regressBoxes = BBoxTransform()
-    clipBoxes = ClipBoxes()
-
-    out = postprocess(x,
-                      anchors, regression, classification,
-                      regressBoxes, clipBoxes,
-                      threshold, iou_threshold)
-    print(out)
-
-def display(preds, imgs, imshow=True, imwrite=True):
+def display(preds, imgs, imshow=True, showtime = 0, imwrite=False):
     for i, img_name in zip(range(len(imgs)), img_names):
         # if len(preds[i]['rois']) == 0:                    # if model dosen't detect object, not show image
         #     continue
@@ -117,15 +93,51 @@ def display(preds, imgs, imshow=True, imwrite=True):
 
         if imshow:
             img = cv2.cvtColor(imgs[i], cv2.COLOR_BGR2RGB)
-            cv2.namedWindow(f'{img_name}', cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)
+            cv2.namedWindow(f'{img_name}', cv2.WINDOW_NORMAL)
             cv2.imshow(f'{img_name}', img)
-            cv2.waitKey(0)
+            cv2.waitKey(showtime)
             cv2.destroyAllWindows()
 
 
-out = invert_affine(framed_metas, out)
-display(out, ori_imgs, imshow=True, imwrite=False)
-print("Done")
+'''
+test.txt image loop
+'''
+with open(os.path.join('/data/data', 'ex_task42', f'{project}', 'crop', 'test.txt')) as f:
+    img_list = f.readlines()
+
+for img_path in img_list:
+    img_path = img_path.replace('\n', '')
+    img_path = os.path.join('/data/data', 'ex_task42', f'{project}', 'crop', 'images',
+                            f'{img_path}')  # image load
+    ori_imgs, framed_imgs, framed_metas = preprocess(img_path, max_size=input_size)
+
+    if use_cuda:
+        x = torch.stack([torch.from_numpy(fi).cuda() for fi in framed_imgs], 0)
+    else:
+        x = torch.stack([torch.from_numpy(fi) for fi in framed_imgs], 0)
+
+    x = x.to(torch.float32 if not use_float16 else torch.float16).permute(0, 3, 1, 2)
+
+    # img_name
+    if type(img_path) == list:
+        img_names = [i.split('/')[-1] for i in img_path]
+    else:
+        img_names = [img_path.split('/')[-1]]
+
+    with torch.no_grad():
+        features, regression, classification, anchors = model(x)
+        regressBoxes = BBoxTransform()
+        clipBoxes = ClipBoxes()
+
+        out = postprocess(x,
+                          anchors, regression, classification,
+                          regressBoxes, clipBoxes,
+                          threshold, iou_threshold)
+        print(out)
+
+    out = invert_affine(framed_metas, out)
+    display(out, ori_imgs, imshow=True, showtime = 3000)
+
 '''
 print('running speed test...')
 with torch.no_grad():

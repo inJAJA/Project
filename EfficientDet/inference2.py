@@ -19,14 +19,14 @@ from utils.utils import preprocess, invert_affine, postprocess, STANDARD_COLORS,
 
 project = 'task42_1130'
 number = '199'
+save_time = '20201203-174940'
+
 compound_coef = 4
 force_input_size = None  # set None to use default size
 # img_path = 'datasets/shape/val/900.jpg''
 # img_path = os.path.join('datasets', project, 'test03.jpg')      # image load
-img_path = os.path.join('/home/jain/Downloads','test', 'pavement1.jpg')      # image load
-# img_path = os.path.join('/data/data',f'{project}','images', '201029100414AO_00002871.jpg')      # image load
-# img_path = os.path.join('/data/data','ex_task42',f'{project}','images','55db7caa-8037-4d80-98a9-33d77346aee4.jpg')
-print(img_path)
+# img_path = os.path.join('/home/jain/Downloads','test', '19-1.png')      # image load
+img_path = os.path.join('/data/data','ex_task42', f'{project}','crop', 'images', '17384853-775f-44f6-af92-0a0de053b821.jpg')      # image load
 
 # img_name
 if type(img_path) == list:
@@ -53,7 +53,7 @@ class Params:
     def __getattr__(self, item):
         return self.params.get(item, None)
 
-params = Params(f'projects/{project}.yml')
+params = Params(f'projects/{project}_crop.yml')
 obj_list = params.obj_list
 obj_list.sort()
 print(obj_list)
@@ -76,7 +76,7 @@ model = EfficientDetBackbone(compound_coef=compound_coef, num_classes=len(obj_li
                              ratios=anchor_ratios, scales=anchor_scales)
 # model.load_state_dict(torch.load(f'logs/{project}/efficientdet-d{compound_coef}_{number}.pth', map_location='cpu'))
 # model.load_state_dict(torch.load(f'/data/efdet/logs/{project}/efficientdet-d{compound_coef}_{number}.pth', map_location='cpu'))
-model.load_state_dict(torch.load(f'/data/efdet/logs/{project}/efficientdet-d{compound_coef}_{number}.pth', map_location='cpu'))
+model.load_state_dict(torch.load(f'/data/efdet/logs/{project}/crop/weights/{save_time}/efficientdet-d{compound_coef}_{number}.pth', map_location='cpu'))
 
 model.requires_grad_(False)
 model.eval()
@@ -97,7 +97,7 @@ with torch.no_grad():
                       threshold, iou_threshold)
     print(out)
 
-def display(preds, imgs, imshow=True, imwrite=True):
+def display(preds, imgs, imshow=True, imwrite=False):
     for i, img_name in zip(range(len(imgs)), img_names):
         # if len(preds[i]['rois']) == 0:                    # if model dosen't detect object, not show image
         #     continue
@@ -124,7 +124,7 @@ def display(preds, imgs, imshow=True, imwrite=True):
 
 
 out = invert_affine(framed_metas, out)
-display(out, ori_imgs, imshow=True, imwrite=False)
+display(out, ori_imgs)
 print("Done")
 '''
 print('running speed test...')
