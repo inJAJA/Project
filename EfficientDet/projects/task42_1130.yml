@@ -1,0 +1,67 @@
+num_gpus: 1
+project_name: task42_1130
+train_set: train
+val_set: test
+mean: [0.485, 0.456, 0.406]
+std: [0.229, 0.224, 0.225]
+anchors_ratios: '[(1.0, 1.0), (1.4, 0.7), (0.7, 1.4)]'
+anchors_scales: '[2 ** 0, 2 ** (1.0 / 3.0), 2 ** (2.0 / 3.0)]'
+obj_list:
+- BasketballStand_surfacePeeling
+- SignalController_discoloration
+- SignalController_surfacePeeling
+- PavementBlock_damage
+- TelephoneBooth_discoloration
+- HandicapZone_surfacePeeling
+- BoundaryStone_damage
+- StreetTreeCover_discoloration
+- StationSign_surfacePeeling
+- PavementBlock_surfacePeeling
+- Bench_surfacePeeling
+- StreetlampPole_distortion
+- ProtectionFence_distortion
+- GoalPost_surfacePeeling
+- StationSign_damage
+- SignalController_damage
+- TreeSupport_damage
+- ConstructionCover_damage
+- StreetTreeCover_distortion
+- Bollard_damage
+- AirwalkMachine_surfacePeeling
+- AirwalkMachine_discoloration
+- PavementBlock_distortion
+- DringkingFountain_discoloration
+- BrailleBlock_damage
+- DringkingFountain_surfacePeeling
+- Bench_damage
+- WalkAcrossPreventionFacility_damage
+- BenchBack_surfacePeeling
+- TurnMachine_surfacePeeling
+- MovableToilet_damage
+- Pagora_discoloration
+- StreetlampPole_damage
+- StreetTreeCover_damage
+- Manhole_surfacePeeling
+- StreetlampPole_discoloration
+- MovableToilet_surfacePeeling
+- Manhole_damage
+- TrashCan_damage
+- TelephoneBooth_surfacePeeling
+- MovableToilet_discoloration
+- Bench_discoloration
+- RoadSafetySign_damage
+- BenchBack_discoloration
+- DringkingFountain_distortion
+- DringkingFountain_damage
+- StationSign_discoloration
+- Bollard_surfacePeeling
+- BoundaryStone_distortion
+- ConstructionCover_distortion
+- RoadSafetySign_surfacePeeling
+- PostBox_damage
+- TrashCan_discoloration
+- PublicToilet_damage
+- StationShelter_surfacePeeling
+- TurnMachine_distortion
+- SitupNachine_surfacePeeling
+- Pagora_damage
