@@ -43,9 +43,12 @@ with open('MS1M_img_paths3.pickle', 'rb') as fw:
 model.eval()
 
 s = time.time()
-features, _ = get_featurs(model, img_paths , opt.input_shape, opt.test_batch_size)
-with open('MS1M_features3.pickle', 'wb') as ff:
-    pickle.dump(features, ff)
+# features, _ = get_featurs(model, img_paths , opt.input_shape, opt.test_batch_size)
+# with open('MS1M_features3.pickle', 'wb') as ff:
+#     pickle.dump(features, ff)
+
+with open('MS1M_features3.pickle', 'rb') as ff:
+    features = pickle.load(ff)
 
 t = time.time() - s
 print('time is {}'.format(t))
@@ -78,7 +81,6 @@ with open('arcface_acc5.txt', 'w') as f:
                     test[fe_1_name] = sim
 
             same = sorted(test.items(), key=(lambda x:x[1]), reverse=True)  # type = tuple
-            print('same :', same)
             true_name = splits[1].split('/')[0]
             test_name = 0 if same == {} else same[0][0].split('/')[0]
 
@@ -86,8 +88,6 @@ with open('arcface_acc5.txt', 'w') as f:
             # print(f'{splits[1]} = {same[0][0]} : {cnt}')
 
             score.append(cnt)
-            print(score)
-
             pbar.set_description("Threshold: {} Pair: {}/{}".format(th, p, len(pairs)))
 
         score = np.asarray(score)
