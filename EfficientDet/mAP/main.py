@@ -345,7 +345,7 @@ def score(args = args):
     TEMP_FILES_PATH = ".temp_files"
     if not os.path.exists(TEMP_FILES_PATH): # if it doesn't exist already
         os.makedirs(TEMP_FILES_PATH)
-    output_files_path = "output"
+    output_files_path = "mAP/output"
     if os.path.exists(output_files_path): # if it exist already
         # reset the output directory
         shutil.rmtree(output_files_path)
@@ -690,7 +690,7 @@ def score(args = args):
             text = "{0:.2f}%".format(ap*100) + " = " + class_name + " AP " #class_name + " AP = {0:.2f}%".format(ap*100)
 
             # add my
-            results[f'{class_name}_AP'] = ap*100
+            results[f'{class_name}'] = ap*100
 
             """
              Write to output.txt
@@ -923,5 +923,4 @@ def score(args = args):
             ""
             )
     # os.chdir("/home/zaiin4050/project/Yet-Another-EfficientDet-Pytorch/")
-
     return results

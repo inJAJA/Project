@@ -12,7 +12,11 @@ class mAP_score():
 
         self.ground_truth()
         self.detection_result()
-        self.results = score()
+        try:
+            self.results = score()
+        except ZeroDivisionError:
+            self.results = {'mAP': float(0)}
+
 
     def ground_truth(self):
         os.makedirs(f'{self.log_path}/ground-truth', exist_ok=True)
