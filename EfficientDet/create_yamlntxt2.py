@@ -4,26 +4,58 @@ import yaml
 import json
 
 top = 'ex_task42'
-project = 'task42_1204'
+project = 'task42_1209'
 train_size = 0.8
 random_seed = 13
 
 # you need to Unnormal file ( Repair + Disposal )
 
-obj_list = ['AirwalkMachine_discoloration', 'AirwalkMachine_surfacePeeling', 'BasketballStand_damage', 'BasketballStand_surfacePeeling',
-            'BenchBack_damage', 'BenchBack_discoloration', 'BenchBack_surfacePeeling', 'Bench_damage', 'Bench_discoloration',
-            'Bench_surfacePeeling', 'Bollard_damage', 'Bollard_surfacePeeling', 'BoundaryStone_damage', 'BoundaryStone_distortion',
-            'BrailleBlock_damage', 'ConstructionCover_damage', 'ConstructionCover_distortion', 'DringkingFountain_damage',
-            'DringkingFountain_discoloration', 'DringkingFountain_distortion', 'DringkingFountain_surfacePeeling', 'GoalPost_surfacePeeling',
-            'HandicapZone_surfacePeeling', 'Manhole_damage', 'Manhole_surfacePeeling', 'MovableToilet_damage', 'MovableToilet_discoloration',
-            'MovableToilet_surfacePeeling', 'Pagora_damage', 'Pagora_discoloration', 'Pagora_surfacePeeling', 'PavementBlock_damage',
-            'PavementBlock_distortion', 'PavementBlock_surfacePeeling', 'PostBox_damage', 'ProtectionFence_distortion', 'PublicToilet_damage',
-            'RoadSafetySign_damage', 'RoadSafetySign_surfacePeeling', 'RunningMachine_surfacePeeling', 'Seesaw_surfacePeeling', 'SignalController_damage',
-            'SignalController_discoloration', 'SignalController_surfacePeeling', 'SitupNachine_surfacePeeling', 'StationShelter_surfacePeeling',
-            'StationSign_damage', 'StationSign_discoloration', 'StationSign_surfacePeeling', 'StreetTreeCover_damage', 'StreetTreeCover_discoloration',
-            'StreetTreeCover_distortion', 'StreetlampPole_damage', 'StreetlampPole_discoloration', 'StreetlampPole_distortion', 'TelephoneBooth_discoloration',
-            'TelephoneBooth_surfacePeeling', 'TrashCan_damage', 'TrashCan_discoloration', 'TreeSupport_damage', 'Trench_damage',
-            'Trench_surfacePeeling', 'TurnMachine_distortion', 'TurnMachine_surfacePeeling', 'WalkAcrossPreventionFacility_damage']
+# obj_list = ['AirwalkMachine_damage', 'AirwalkMachine_discoloration', 'AirwalkMachine_distortion', 'AirwalkMachine_surfacePeeling',
+#               'BasketballStand_damage', 'BasketballStand_discoloration', 'BasketballStand_distortion', 'BasketballStand_surfacePeeling',
+#             'Bench_damage', 'Bench_discoloration', 'Bench_distortion', 'Bench_surfacePeeling', 'BenchBack_damage', 'BenchBack_discoloration',
+#             'BenchBack_distortion', 'BenchBack_surfacePeeling', 'BicycleRack_damage', 'BicycleRack_discoloration', 'BicycleRack_distortion',
+#             'BicycleRack_surfacePeeling', 'Bollard_damage', 'Bollard_discoloration', 'Bollard_distortion', 'Bollard_surfacePeeling',
+#             'BoundaryStone_damage', 'BoundaryStone_discoloration', 'BoundaryStone_distortion', 'BoundaryStone_surfacePeeling',
+#             'BrailleBlock_damage', 'BrailleBlock_discoloration', 'BrailleBlock_distortion', 'BrailleBlock_surfacePeeling', 'ConstructionCover_damage',
+#             'ConstructionCover_discoloration', 'ConstructionCover_distortion', 'ConstructionCover_surfacePeeling', 'DirectionalSign_damage',
+#             'DirectionalSign_discoloration', 'DirectionalSign_distortion', 'DirectionalSign_surfacePeeling', 'DringkingFountain_damage',
+#             'DringkingFountain_discoloration', 'DringkingFountain_distortion', 'DringkingFountain_surfacePeeling', 'FlowerStand_damage',
+#             'FlowerStand_discoloration', 'FlowerStand_distortion', 'FlowerStand_surfacePeeling', 'GoalPost_damage', 'GoalPost_discoloration',
+#             'GoalPost_distortion', 'GoalPost_surfacePeeling', 'HandicapZone_damage', 'HandicapZone_discoloration', 'HandicapZone_distortion',
+#             'HandicapZone_surfacePeeling', 'Manhole_damage', 'Manhole_discoloration', 'Manhole_distortion', 'Manhole_surfacePeeling',
+#             'MovableToilet_damage', 'MovableToilet_discoloration', 'MovableToilet_distortion', 'MovableToilet_surfacePeeling', 'Pagora_damage',
+#             'Pagora_discoloration', 'Pagora_distortion', 'Pagora_surfacePeeling', 'PavementBlock_damage', 'PavementBlock_discoloration',
+#             'PavementBlock_distortion', 'PavementBlock_surfacePeeling', 'PostBox_damage', 'PostBox_discoloration', 'PostBox_distortion',
+#             'PostBox_surfacePeeling', 'ProtectionFence_damage', 'ProtectionFence_discoloration', 'ProtectionFence_distortion',
+#             'ProtectionFence_surfacePeeling', 'PublicToilet_damage', 'PublicToilet_discoloration', 'PublicToilet_distortion',
+#             'PublicToilet_surfacePeeling', 'RoadSafetySign_damage', 'RoadSafetySign_discoloration', 'RoadSafetySign_distortion',
+#             'RoadSafetySign_surfacePeeling', 'RunningMachine_damage', 'RunningMachine_discoloration', 'RunningMachine_distortion',
+#             'RunningMachine_surfacePeeling', 'Seesaw_damage', 'Seesaw_discoloration', 'Seesaw_distortion', 'Seesaw_surfacePeeling',
+#             'ShadeCanopy_damage', 'ShadeCanopy_discoloration', 'ShadeCanopy_distortion', 'ShadeCanopy_surfacePeeling', 'SignalController_damage',
+#             'SignalController_discoloration', 'SignalController_distortion', 'SignalController_surfacePeeling', 'SignalPole_damage',
+#             'SignalPole_discoloration', 'SignalPole_distortion', 'SignalPole_surfacePeeling', 'SitupNachine_damage', 'SitupNachine_discoloration',
+#             'SitupNachine_distortion', 'SitupNachine_surfacePeeling', 'Slide_damage', 'Slide_discoloration', 'Slide_distortion', 'Slide_surfacePeeling',
+#             'SoundproofWalls_damage', 'SoundproofWalls_discoloration', 'SoundproofWalls_distortion', 'SoundproofWalls_surfacePeeling',
+#             'StationShelter_damage', 'StationShelter_discoloration', 'StationShelter_distortion', 'StationShelter_surfacePeeling',
+#             'StationSign_damage', 'StationSign_discoloration', 'StationSign_distortion', 'StationSign_surfacePeeling', 'StreetTreeCover_damage',
+#             'StreetTreeCover_discoloration', 'StreetTreeCover_distortion', 'StreetTreeCover_surfacePeeling', 'StreetlampPole_damage',
+#             'StreetlampPole_discoloration', 'StreetlampPole_distortion', 'StreetlampPole_surfacePeeling', 'SubwayVentilation_damage',
+#             'SubwayVentilation_discoloration', 'SubwayVentilation_distortion', 'SubwayVentilation_surfacePeeling', 'Swing_damage',
+#             'Swing_discoloration', 'Swing_distortion', 'Swing_surfacePeeling', 'TelephoneBooth_damage', 'TelephoneBooth_discoloration',
+#             'TelephoneBooth_distortion', 'TelephoneBooth_surfacePeeling', 'TrashCan_damage', 'TrashCan_discoloration', 'TrashCan_distortion',
+#             'TrashCan_surfacePeeling', 'TreeSupport_damage', 'TreeSupport_discoloration', 'TreeSupport_distortion', 'TreeSupport_surfacePeeling',
+#             'Trench_damage', 'Trench_discoloration', 'Trench_distortion', 'Trench_surfacePeeling', 'TurnMachine_damage', 'TurnMachine_discoloration',
+#             'TurnMachine_distortion', 'TurnMachine_surfacePeeling', 'WalkAcrossPreventionFacility_damage', 'WalkAcrossPreventionFacility_discoloration',
+#             'WalkAcrossPreventionFacility_distortion', 'WalkAcrossPreventionFacility_surfacePeeling']
+
+# obj_list = ['AirwalkMachine_damage', 'BasketballStand_damage', 'BenchBack_damage', 'Bench_damage', 'Bollard_damage', 'BoundaryStone_damage',
+#             'BrailleBlock_damage', 'ConstructionCover_damage', 'DringkingFountain_damage', 'GoalPost_damage', 'HandicapZone_damage',
+#             'Manhole_damage', 'MovableToilet_damage', 'Pagora_damage', 'PavementBlock_damage', 'PostBox_damage', 'ProtectionFence_damage',
+#             'PublicToilet_damage', 'RoadSafetySign_damage', 'RunningMachine_damage', 'Seesaw_damage', 'SignalController_damage',
+#             'SitupNachine_damage', 'StationShelter_damage', 'StationSign_damage', 'StreetTreeCover_damage', 'StreetlampPole_damage',
+#             'TelephoneBooth_damage', 'TrashCan_damage', 'TreeSupport_damage', 'Trench_damage', 'TurnMachine_damage', 'WalkAcrossPreventionFacility_damage']
+
+obj_list = ['damage', 'discoloration', 'distortion', 'surfacePeeling']
 
 class create_datatxt:
     def __init__(self, project, train_size, random_seed):
@@ -108,7 +140,7 @@ def create_yaml(project, obj_list):
     # this is coco anchors, change it if necessary
 
 
-    with open(f'projects/{project}_crop.yml', 'w') as f:
+    with open(f'projects/{project}_crop02.yml', 'w') as f:
         yaml.dump(data00, f)
         yaml.dump(data01, f, default_flow_style=None)
         yaml.dump(data02, f)
